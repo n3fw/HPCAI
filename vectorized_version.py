@@ -1,17 +1,16 @@
 from sequential_pipeline import (
     load_image,
-    process_one_image,
     mean_filter_3x3,
     compute_image_statistics,
-    normalize_image
+    normalize_image,
+    compute_global_summary,
+    save_results_to_csv
 )
 
+
 from machine_info import benchmark, print_benchmark_report
-import argparse
-import csv
 import time
 from pathlib import Path
-
 import numpy as np
 
 def normalize_image_vectorized(image: np.ndarray) -> np.ndarray:
@@ -77,6 +76,99 @@ def compute_image_statistics_vectorized(
         "fraction_above_threshold": fraction_above_threshold,
     }
 
+def run_vectorized_pipeline(
+    data_dir: Path,
+    output_csv: Path,
+    threshold: float,
+) -> None:
+    """
+    Run the complete application with vectorized functions.
+    """
+
+    image_paths = sorted(data_dir.glob("*.npy"))
+
+    if not image_paths:
+        raise FileNotFoundError(
+            f"No .npy files were found in '{data_dir}'.\n"
+            "Generate the demo dataset first with:\n"
+            "    python sequential_pipeline.py --generate-demo"
+        )
+
+    print("=" * 68)
+    print("Vectorized scientific image-processing pipeline")
+    print("=" * 68)
+    print(f"Dataset directory : {data_dir}")
+    print(f"Number of images  : {len(image_paths)}")
+    print(f"Threshold         : {threshold}")
+    print()
+
+    results: list[dict[str, float | str]] = []
+
+    start_time = time.perf_counter()
+
+    for index, path in enumerate(image_paths, start=1):
+
+        # Chargement de l'image
+        image = load_image(path)
+
+        # Normalisation vectorisée
+        normalized = normalize_image_vectorized(image)
+
+        # Filtre 3x3 vectorisé
+        filtered = mean_filter_3x3_vectorized(normalized)
+
+        # Statistiques vectorisées
+        statistics = compute_image_statistics_vectorized(
+            filtered,
+            threshold=threshold,
+        )
+
+        result = {
+            "file": path.name,
+            **statistics,
+        }
+
+        results.append(result)
+
+        print(
+            f"[{index:03d}/{len(image_paths):03d}] "
+            f"{path.name} processed"
+        )
+
+    elapsed_time = time.perf_counter() - start_time
+
+    summary = compute_global_summary(results)
+
+    save_results_to_csv(
+        results,
+        output_path=output_csv,
+    )
+
+    print()
+    print("=" * 68)
+    print("Global summary")
+    print("=" * 68)
+    print(
+        f"Mean of image means            : "
+        f"{summary['mean_of_means']:.8f}"
+    )
+    print(
+        f"Global maximum                 : "
+        f"{summary['global_max']:.8f}"
+    )
+    print(
+        f"Total pixels above threshold   : "
+        f"{summary['total_above_threshold']:.0f}"
+    )
+    print(
+        f"Average fraction above threshold: "
+        f"{summary['average_fraction_above_threshold']:.8f}"
+    )
+    print()
+    print(f"Vectorized execution time      : {elapsed_time:.6f} s")
+    print(f"Results written to             : {output_csv}")
+    print("=" * 68)
+
 if __name__ == "__main__":
 
     image = np.load("dataset/image_0000.npy")
@@ -87,11 +179,13 @@ if __name__ == "__main__":
 
     print("Normalize sequential:")
     print_benchmark_report(results1)
+    print("\n")
 
     print("Normalize vectorized:")
     print_benchmark_report(results2)
 
     print("Speedup:", results1[3] / results2[3])
+    print("\n")
 
     # Mean filter
     normalized = normalize_image(image)
@@ -101,11 +195,14 @@ if __name__ == "__main__":
 
     print("Mean filter sequential:")
     print_benchmark_report(results3)
+    print("\n")
 
     print("Mean filter vectorized:")
     print_benchmark_report(results4)
 
     print("Speedup:", results3[3] / results4[3])
+
+    print("\n")
 
     #statistics
     filtered = mean_filter_3x3(normalized)
@@ -115,11 +212,13 @@ if __name__ == "__main__":
 
     print("Statistics sequential:")
     print_benchmark_report(results5)
+    print("\n")
 
     print("Statistics vectorized:")
     print_benchmark_report(results6)
 
     print("Speedup:", results5[3] / results6[3])
+    print("\n")
 
     print("Normalization correct:",
       np.allclose(normalize_image(image), normalize_image_vectorized(image)))
@@ -133,3 +232,8 @@ if __name__ == "__main__":
 
     print("Statistics correct:",
         all(np.isclose(stats_seq[key], stats_vec[key]) for key in stats_seq))
+    run_vectorized_pipeline(
+    Path("dataset"),
+    Path("vectorized_results.csv"),
+    0.65
+    )
