@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
     times = {}
 
-    for p in [1, 2, 4, 8, 12]:
+    for p in [1, 2, 4, 8]:
 
         start = time.perf_counter()
 
