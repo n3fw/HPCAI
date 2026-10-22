@@ -102,7 +102,7 @@ print(f"Processing sequential   | {cpu_sequential_time:.4f}   | 1.00")
 print(f"Processing {n_images} threads   | {cpu_thread_time:.4f}   | "
       f"{cpu_sequential_time / cpu_thread_time:.2f}")
 
-save_results_to_csv(results, Path("threading_results.csv"))
+save_results_to_csv(results, Path("results/threading_results.csv"))
 
 summary = compute_global_summary(results)
 print()
