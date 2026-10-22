@@ -52,6 +52,31 @@ def mean_filter_3x3_vectorized(image: np.ndarray) -> np.ndarray:
 
     return output
 
+def compute_image_statistics_vectorized(
+    image: np.ndarray,
+    threshold: float,
+) -> dict[str, float]:
+
+    height, width = image.shape
+
+    # Vectorisation : remplacement des deux boucles for
+    # Somme en float64 pour garder la même précision que le baseline
+    total = float(image.sum(dtype=np.float64))
+    maximum = float(image.max())
+    above_threshold = int(np.count_nonzero(image >= threshold))
+
+    pixel_count = height * width
+
+    mean_value = total / pixel_count
+    fraction_above_threshold = above_threshold / pixel_count
+
+    return {
+        "mean": mean_value,
+        "max": maximum,
+        "above_threshold": float(above_threshold),
+        "fraction_above_threshold": fraction_above_threshold,
+    }
+
 if __name__ == "__main__":
 
     image = np.load("dataset/image_0000.npy")
@@ -82,9 +107,29 @@ if __name__ == "__main__":
 
     print("Speedup:", results3[3] / results4[3])
 
+    #statistics
+    filtered = mean_filter_3x3(normalized)
+    threshold = 0.65
+    results5 = benchmark(compute_image_statistics, filtered, threshold, repeat=10, warmup=1)
+    results6 = benchmark(compute_image_statistics_vectorized, filtered, threshold, repeat=10, warmup=1)
+
+    print("Statistics sequential:")
+    print_benchmark_report(results5)
+
+    print("Statistics vectorized:")
+    print_benchmark_report(results6)
+
+    print("Speedup:", results5[3] / results6[3])
+
     print("Normalization correct:",
       np.allclose(normalize_image(image), normalize_image_vectorized(image)))
 
     print("Mean filter correct:",
         np.allclose(mean_filter_3x3(normalized),
                     mean_filter_3x3_vectorized(normalized)))
+    
+    stats_seq = compute_image_statistics(filtered, threshold)
+    stats_vec = compute_image_statistics_vectorized(filtered, threshold)
+
+    print("Statistics correct:",
+        all(np.isclose(stats_seq[key], stats_vec[key]) for key in stats_seq))
