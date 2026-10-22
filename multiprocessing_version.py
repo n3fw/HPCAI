@@ -49,7 +49,7 @@ if __name__ == "__main__":
         print(f"{p} | {T_p:.3f} | {speedup:.2f} | {efficiency:.2f}")
 
     # The results are the same for every p: we save the last ones.
-    save_results_to_csv(results, Path("multiprocessing_results.csv"))
+    save_results_to_csv(results, Path("results/multiprocessing_results.csv"))
 
     summary = compute_global_summary(results)
     print()
