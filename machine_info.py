@@ -160,6 +160,6 @@ if __name__ == "__main__":
     )
 
     print_benchmark_report(results)
-    save_benchmark_csv(results, "baseline_results.csv")
+    save_benchmark_csv(results, "results/baseline_results.csv")
     visualisation(results)
     profiling()
