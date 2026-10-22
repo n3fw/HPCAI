@@ -41,7 +41,7 @@ def main():
         final_results = [item for sublist in results for item in sublist]
         save_results_to_csv(final_results, Path("results/mpi_results.csv"))
         print("Cumulative time :", np.sum(times))
-        print("Speedup is of about", 6.03 / np.sum(times))
+        print("Speedup is of about", 4.01 / np.sum(times))
 
     
 
