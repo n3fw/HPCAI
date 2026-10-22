@@ -42,13 +42,10 @@ def main():
     if rank == 0:
         final_results = [item for sublist in results for item in sublist]
         save_results_to_csv(final_results, Path("results/mpi_results.csv"))
-        for i in range(len(times)):
-            print(f"Image {i+1} : {times[i]}")
         print("Cumulative time :", np.sum(times))
-        return times
+        print("Speedup is of about", 6.03 / np.sum(times))
 
     
 
 if __name__ == "__main__":
     times = main()
-    print("Speedup is of about", 6.03 / np.sum(times))
