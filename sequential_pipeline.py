@@ -424,7 +424,7 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("sequential_results.csv"),
+        default=Path("results/sequential_results.csv"),
         help="CSV file in which the results will be written.",
     )
 
